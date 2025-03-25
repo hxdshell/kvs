@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -10,10 +11,25 @@ import (
 func GetMux() *http.ServeMux {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/get/{key}", handleGet)
-	mux.HandleFunc("/put/{key}", handlePut)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("PONG"))
+	})
 
+	mux.HandleFunc("/get/{key}", handleGet)
+	mux.HandleFunc("/set/{key}", handleSet)
+	mux.HandleFunc("/list", handleList)
+	mux.HandleFunc("/delete/{key}", handleDelete)
 	return mux
+}
+
+func handleList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "GET" {
+		http.Error(w, "Only GET method is allowed\n", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(list())
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +50,7 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handlePut(w http.ResponseWriter, r *http.Request) {
+func handleSet(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "PUT" {
 		http.Error(w, "Only PUT method is allowed\n", http.StatusMethodNotAllowed)
 		return
@@ -47,6 +63,17 @@ func handlePut(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed to read request body\n", http.StatusInternalServerError)
 		return
 	}
-	put(key, body)
-	log.Printf("PUT(%s,%s)", key, body)
+	set(key, body)
+	log.Printf("SET(%s,%s)", key, body)
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		http.Error(w, "Only DELETE method is allowed\n", http.StatusMethodNotAllowed)
+		return
+	}
+
+	params := strings.Split(r.URL.Path, "/")
+	key := params[2]
+	remove(key)
 }

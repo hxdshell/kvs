@@ -5,3 +5,4 @@
 - [ ] DELETE/LIST
 - [ ] Snapshots and logs
 - [ ] Does it scale?
+- [ ] explore different protocols other than http

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,9 +20,28 @@ func get(key string) []byte {
 	return val
 }
 
-func put(key string, value []byte) {
+func list() [][]string {
+	rwlock.RLock()
+
+	var result [][]string
+	for k, v := range Store {
+		result = append(result, []string{k, string(v)})
+	}
+
+	rwlock.RUnlock()
+	log.Printf("LIST(%d)\n", len(result))
+	return result
+}
+
+func set(key string, value []byte) {
 	rwlock.Lock()
 	Store[key] = value
+	rwlock.Unlock()
+}
+
+func remove(key string) {
+	rwlock.Lock()
+	delete(Store, key)
 	rwlock.Unlock()
 }
 
@@ -42,13 +62,13 @@ func main() {
 			os.Exit(1)
 		}
 	}()
-	fmt.Printf("Starting a server on port %d\n", port)
+	fmt.Printf("\033[1;37mStarting a server on port %d\033[0m\n\n", port)
 
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, os.Interrupt)
 	<-sigchan
 
 	clear(Store)
-	fmt.Println()
+	fmt.Printf("\rexit\n")
 	server.Shutdown(context.Background())
 }
