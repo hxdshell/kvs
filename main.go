@@ -20,6 +20,12 @@ func get(key string) []byte {
 	return val
 }
 
+func set(key string, value []byte) {
+	rwlock.Lock()
+	Store[key] = value
+	rwlock.Unlock()
+}
+
 func list() [][]string {
 	rwlock.RLock()
 
@@ -33,15 +39,15 @@ func list() [][]string {
 	return result
 }
 
-func set(key string, value []byte) {
-	rwlock.Lock()
-	Store[key] = value
-	rwlock.Unlock()
-}
-
 func remove(key string) {
 	rwlock.Lock()
 	delete(Store, key)
+	rwlock.Unlock()
+}
+
+func flushdb() {
+	rwlock.Lock()
+	clear(Store)
 	rwlock.Unlock()
 }
 

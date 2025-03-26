@@ -19,7 +19,17 @@ func GetMux() *http.ServeMux {
 	mux.HandleFunc("/set/{key}", handleSet)
 	mux.HandleFunc("/list", handleList)
 	mux.HandleFunc("/delete/{key}", handleDelete)
+	mux.HandleFunc("/flush", handleFlush)
 	return mux
+}
+
+func handleFlush(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "DELETE" {
+		http.Error(w, "Only DELETE method is allowed\n", http.StatusMethodNotAllowed)
+		return
+	}
+	flushdb()
+	log.Println("FLUSHDB")
 }
 
 func handleList(w http.ResponseWriter, r *http.Request) {
