@@ -5,21 +5,19 @@ import (
 	"fmt"
 	"io"
 	"kvs/core"
+	"kvs/utils"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 // TODO : Handler logic is pretty redundant, make a better wrapper
+
 func handleFlush(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "DELETE" {
-		http.Error(w, "ERROR : Only DELETE method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("DELETE", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/"
-	params := strings.Split(trimmed, "/")
 
 	if len(params) > 2 {
 		http.Error(w, "ERROR : usage: /flushdb \n", http.StatusNotFound)
@@ -31,13 +29,10 @@ func handleFlush(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "ERROR : Only GET method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("GET", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/"
-	params := strings.Split(trimmed, "/")
 
 	if len(params) > 2 {
 		http.Error(w, "ERROR : usage: /list \n", http.StatusNotFound)
@@ -51,13 +46,10 @@ func handleList(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "ERROR : Only GET method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("GET", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/" ex: <host>/get/key/
-	params := strings.Split(trimmed, "/")
 
 	if len(params) != 3 {
 		http.Error(w, "ERROR : usage: /get/{key}\n", http.StatusNotFound)
@@ -80,13 +72,10 @@ func handleGet(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleSet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "PUT" {
-		http.Error(w, "ERROR : Only PUT method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("PUT", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/"  ex: <host>/set/key/
-	params := strings.Split(trimmed, "/")
 
 	if len(params) != 3 {
 		http.Error(w, "ERROR : usage: /get/{key}", http.StatusNotFound)
@@ -113,13 +102,10 @@ func handleSet(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDelete(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "DELETE" {
-		http.Error(w, "ERROR : Only DELETE method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("DELETE", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/")
-	params := strings.Split(trimmed, "/")
 
 	if len(params) != 3 {
 		http.Error(w, "ERROR : usage: /delete/{key}", http.StatusNotFound)
@@ -131,13 +117,10 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleInc(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "ERROR : Only GET method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("GET", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/" ex: <host>/inc/counter/
-	params := strings.Split(trimmed, "/")
 
 	if len(params) != 3 && len(params) != 4 {
 		http.Error(w, "ERROR : usage: /inc/{key}/{magnitude}\n", http.StatusNotFound)
@@ -158,7 +141,7 @@ func handleInc(w http.ResponseWriter, r *http.Request) {
 		magnitude = result
 	}
 
-	err := core.IncDec(key, magnitude, true)
+	err = core.IncDec(key, magnitude, true)
 	if err != nil {
 		http.Error(w, "ERROR : Value is either non-existent or not an integer\n", http.StatusBadRequest)
 		return
@@ -166,13 +149,10 @@ func handleInc(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleDec(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "ERROR : Only GET method is allowed\n", http.StatusMethodNotAllowed)
+	params, err := utils.ParseUrl("GET", w, r)
+	if err != nil {
 		return
 	}
-
-	trimmed := strings.TrimRight(r.URL.Path, "/") // remove trailing "/" ex: <host>/dec/counter/
-	params := strings.Split(trimmed, "/")
 
 	if len(params) != 3 && len(params) != 4 {
 		http.Error(w, "ERROR : usage: /dec/{key}/{magnitude}\n", http.StatusNotFound)
@@ -192,7 +172,7 @@ func handleDec(w http.ResponseWriter, r *http.Request) {
 		magnitude = result
 	}
 
-	err := core.IncDec(key, magnitude, false)
+	err = core.IncDec(key, magnitude, false)
 	if err != nil {
 		http.Error(w, "ERROR : Value is either non-existent or not an integer\n", http.StatusBadRequest)
 		return
