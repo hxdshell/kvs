@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 )
 
 func main() {
@@ -30,13 +31,21 @@ func main() {
 		}
 	}()
 
+	ticker, done := core.StartTicker(30, core.KillExpiredKeys)
+
 	sigchan := make(chan os.Signal, 1)
 	signal.Notify(sigchan, os.Interrupt)
 	<-sigchan
+	fmt.Printf("\r")
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	server.Shutdown(ctx)
 	core.Flushdb()
-	fmt.Printf("\rexit\n")
-	server.Shutdown(context.Background())
+	core.StopTicker(ticker, done)
 
+	time.Sleep(1 * time.Second) // Ensure everything is clean before exiting
+	fmt.Printf("exit\n")
 	os.Exit(0)
 }

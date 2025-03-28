@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"kvs/core"
 	"kvs/utils"
@@ -77,15 +76,20 @@ func handleSet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(params) != 3 {
-		http.Error(w, "ERROR : usage: /get/{key}", http.StatusNotFound)
+	if len(params) != 3 && len(params) != 4 {
+		http.Error(w, "ERROR : usage: /set/{key}/(ttl)\n", http.StatusNotFound)
 		return
 	}
 
 	key := params[2]
-	if key == "" {
-		fmt.Println("boring")
-		return
+	ttl := -1
+	if len(params) == 4 {
+		result, err := strconv.Atoi(params[3])
+		if err != nil {
+			http.Error(w, "ERROR: ttl must be an integer\n", http.StatusBadRequest)
+			return
+		}
+		ttl = result
 	}
 
 	body, err := io.ReadAll(r.Body)
@@ -97,7 +101,7 @@ func handleSet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "ERROR : NULL VALUE\n", http.StatusBadRequest)
 		return
 	}
-	core.Set(key, body)
+	core.Set(key, body, ttl)
 	log.Printf("SET(%s,%s)", key, body)
 }
 
@@ -123,7 +127,7 @@ func handleInc(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(params) != 3 && len(params) != 4 {
-		http.Error(w, "ERROR : usage: /inc/{key}/{magnitude}\n", http.StatusNotFound)
+		http.Error(w, "ERROR : usage: /inc/{key}/(magnitude)\n", http.StatusNotFound)
 		return
 	}
 
@@ -155,7 +159,7 @@ func handleDec(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(params) != 3 && len(params) != 4 {
-		http.Error(w, "ERROR : usage: /dec/{key}/{magnitude}\n", http.StatusNotFound)
+		http.Error(w, "ERROR : usage: /dec/{key}/(magnitude)\n", http.StatusNotFound)
 		return
 	}
 

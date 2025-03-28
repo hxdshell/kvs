@@ -1,34 +1,53 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"strconv"
-	"sync"
+	"time"
 )
 
-var store map[string][]byte
-var rwlock sync.RWMutex
-
 func InitStore() {
-	store = make(map[string][]byte)
+	store = make(map[string]Value)
 }
 
 func Get(key string) []byte {
+	var result []byte = []byte{}
+
 	rwlock.RLock()
-	val := store[key]
+	data := store[key]
+	if time.Now().Before(data.ttl) {
+		result = data.val
+	}
 	rwlock.RUnlock()
-	return val
+
+	return result
 }
 
-func Set(key string, value []byte) {
+func Set(key string, storeval []byte, ttl int) {
+
+	fmt.Println("TTL INT : ", ttl)
+	var storeTTL time.Time
+	if ttl < 0 {
+		storeTTL = time.Time{}
+	} else {
+		fmt.Println("TTL DURATION: ", time.Duration(ttl))
+		storeTTL = time.Now().Add(time.Duration(ttl) * time.Second)
+		fmt.Println("storeTTL ", storeTTL)
+	}
+
 	rwlock.Lock()
-	store[key] = value
+	store[key] = Value{
+		val: storeval,
+		ttl: storeTTL,
+	}
 	rwlock.Unlock()
+	fmt.Printf("%02d-%02d-%02d\n", store[key].ttl.Hour(), store[key].ttl.Minute(), store[key].ttl.Second())
 }
 
 func IncDec(key string, magnitude int, isInc bool) error {
 	rwlock.Lock()
-	value := store[key]
+	value := store[key].val
 	val, err := strconv.Atoi(string(value))
 
 	if err != nil {
@@ -36,11 +55,13 @@ func IncDec(key string, magnitude int, isInc bool) error {
 		return err
 	}
 
+	prevVal := store[key]
 	if isInc {
-		store[key] = []byte(strconv.Itoa(val + magnitude))
+		prevVal.val = []byte(strconv.Itoa(val + magnitude))
 	} else {
-		store[key] = []byte(strconv.Itoa(val - magnitude))
+		prevVal.val = []byte(strconv.Itoa(val - magnitude))
 	}
+	store[key] = prevVal
 	rwlock.Unlock()
 
 	return nil
@@ -51,7 +72,9 @@ func List() [][]string {
 
 	var result [][]string
 	for k, v := range store {
-		result = append(result, []string{k, string(v)})
+		if time.Now().Before(v.ttl) {
+			result = append(result, []string{k, string(v.val)})
+		}
 	}
 
 	rwlock.RUnlock()
