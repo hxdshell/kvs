@@ -8,12 +8,27 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 )
 
 func main() {
 
-	port := 3000
+	var port uint16 = 3000
+
+	args := os.Args
+
+	if len(args) >= 3 {
+		if args[1] == "-p" {
+			num, err := strconv.ParseUint(args[2], 10, 16)
+			if err != nil {
+				fmt.Println("ERROR : port must be of type unsigned integer of 16 bits")
+				os.Exit(1)
+			}
+			port = uint16(num)
+		}
+	}
+
 	addr := fmt.Sprintf(":%d", port)
 
 	server := &http.Server{

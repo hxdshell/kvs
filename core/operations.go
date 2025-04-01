@@ -16,7 +16,8 @@ func Get(key string) []byte {
 
 	rwlock.RLock()
 	data := store[key]
-	if time.Now().Before(data.ttl) {
+
+	if data.ttl.IsZero() || time.Now().Before(data.ttl) {
 		result = data.val
 	}
 	rwlock.RUnlock()
@@ -72,7 +73,7 @@ func List() [][]string {
 
 	var result [][]string
 	for k, v := range store {
-		if time.Now().Before(v.ttl) {
+		if v.ttl.IsZero() || time.Now().Before(v.ttl) {
 			result = append(result, []string{k, string(v.val)})
 		}
 	}

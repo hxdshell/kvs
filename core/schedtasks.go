@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -11,6 +12,7 @@ func KillExpiredKeys() {
 		}
 
 		if time.Now().After(data.ttl) {
+			fmt.Println("Deleting ", key)
 			delete(store, key)
 		}
 	}
