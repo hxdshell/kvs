@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -27,14 +26,11 @@ func Get(key string) []byte {
 
 func Set(key string, storeval []byte, ttl int) {
 
-	fmt.Println("TTL INT : ", ttl)
 	var storeTTL time.Time
 	if ttl < 0 {
 		storeTTL = time.Time{}
 	} else {
-		fmt.Println("TTL DURATION: ", time.Duration(ttl))
 		storeTTL = time.Now().Add(time.Duration(ttl) * time.Second)
-		fmt.Println("storeTTL ", storeTTL)
 	}
 
 	rwlock.Lock()
@@ -43,7 +39,6 @@ func Set(key string, storeval []byte, ttl int) {
 		ttl: storeTTL,
 	}
 	rwlock.Unlock()
-	fmt.Printf("%02d-%02d-%02d\n", store[key].ttl.Hour(), store[key].ttl.Minute(), store[key].ttl.Second())
 }
 
 func IncDec(key string, magnitude int, isInc bool) error {
